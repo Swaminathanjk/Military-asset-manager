@@ -19,6 +19,7 @@ const Assignments = () => {
   const [bases, setBases] = useState([]);
   const [assetTypes, setAssetTypes] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [filteredAssignments, setFilteredAssignments] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
@@ -37,9 +38,20 @@ const Assignments = () => {
           api.get("/users"),
         ]);
 
-        setBases(basesRes.data.data || []);
-        setAssetTypes(assetTypesRes.data || []);
-        setUsers(usersRes.data.data || []);
+        // Defensive: ensure data arrays
+        const basesData = Array.isArray(basesRes.data.data)
+          ? basesRes.data.data
+          : [];
+        const assetTypesData = Array.isArray(assetTypesRes.data)
+          ? assetTypesRes.data
+          : [];
+        const usersData = Array.isArray(usersRes.data.data)
+          ? usersRes.data.data
+          : [];
+
+        setBases(basesData);
+        setAssetTypes(assetTypesData);
+        setUsers(usersData);
 
         if (user.role === "base commander" && user.baseId) {
           setFormData((prev) => ({
@@ -54,7 +66,7 @@ const Assignments = () => {
     };
 
     fetchFormData();
-  }, [user]);
+  }, [user, canAssign]);
 
   // Fetch assignments based on role
   useEffect(() => {
@@ -63,34 +75,50 @@ const Assignments = () => {
     const fetchAssignments = async () => {
       setLoading(true);
       try {
-        const res = await api.get("/assignments");
-        let allAssignments = res.data;
-
-        console.log("Fetched assignments:", allAssignments);
-
+        let url = "/assignments";
         if (user.role === "personnel") {
-          allAssignments = allAssignments.filter(
-            (a) =>
-              a.assignedTo &&
-              (a.assignedTo.serviceId === user.serviceId ||
-                a.assignedTo === user.serviceId)
-          );
-        } else if (user.role === "base commander" && user.baseId) {
-          allAssignments = allAssignments.filter((a) => {
-            if (!a.base) return false;
-            if (typeof a.base === "string") {
-              return normalizeId(a.base) === normalizeId(user.baseId);
-            } else if (typeof a.base === "object" && a.base._id) {
-              return normalizeId(a.base._id) === normalizeId(user.baseId);
-            }
-            return false;
-          });
+          url = `/assignments/personnel/${user.serviceId}`;
+        } else if (user.role === "base commander") {
+          // NOTE: since you said no API for /assignments/base/:id, fallback to /assignments and filter client side
+          url = "/assignments";
         }
 
+        const res = await api.get(url);
+
+        // Defensive: check response is array
+        const allAssignments = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data.data)
+          ? res.data.data
+          : [];
+
         setAssignments(allAssignments);
+
+        // Filter assignments by base for base commander or personnel
+        if (user.role === "base commander" && user.baseId) {
+          const filtered = allAssignments.filter(
+            (a) =>
+              normalizeId(a.base?._id || a.base) ===
+              normalizeId(user.baseId._id || user.baseId)
+          );
+          setFilteredAssignments(filtered);
+        } else if (user.role === "personnel") {
+          // Filter by assignedTo serviceId (if API doesn't do it)
+          const filtered = allAssignments.filter(
+            (a) =>
+              a.assignedTo === user.serviceId ||
+              a.assignedTo?.serviceId === user.serviceId
+          );
+          setFilteredAssignments(filtered);
+        } else {
+          // admin or others: show all
+          setFilteredAssignments(allAssignments);
+        }
       } catch (err) {
         console.error("Assignment fetch error:", err);
         toast.error("Failed to load assignments");
+        setAssignments([]);
+        setFilteredAssignments([]);
       } finally {
         setLoading(false);
       }
@@ -140,16 +168,34 @@ const Assignments = () => {
         quantity: 1,
       });
 
-      // Refresh assignments
-      const refreshUrl =
-        user.role === "personnel"
-          ? `/assignments/personnel/${user.serviceId}`
-          : user.role === "base commander"
-          ? `/assignments/base/${normalizeId(user.baseId)}`
-          : "/assignments";
+      // Refresh assignments after creation
+      const res = await api.get("/assignments");
+      const allAssignments = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data.data)
+        ? res.data.data
+        : [];
 
-      const res = await api.get(refreshUrl);
-      setAssignments(res.data.data || []);
+      setAssignments(allAssignments);
+
+      // Re-apply filter based on role
+      if (user.role === "base commander" && user.baseId) {
+        const filtered = allAssignments.filter(
+          (a) =>
+            normalizeId(a.base?._id || a.base) ===
+            normalizeId(user.baseId._id || user.baseId)
+        );
+        setFilteredAssignments(filtered);
+      } else if (user.role === "personnel") {
+        const filtered = allAssignments.filter(
+          (a) =>
+            a.assignedTo === user.serviceId ||
+            a.assignedTo?.serviceId === user.serviceId
+        );
+        setFilteredAssignments(filtered);
+      } else {
+        setFilteredAssignments(allAssignments);
+      }
     } catch (err) {
       console.error("Create assignment error:", err);
       toast.error(err.response?.data?.message || "Assignment failed");
@@ -158,12 +204,19 @@ const Assignments = () => {
     }
   };
 
-  // Filter users for current base
-  const personnelForBase = users.filter(
-    (u) =>
-      u.role === "personnel" &&
-      normalizeId(u.baseId?._id || u.baseId) === normalizeId(formData.base)
-  );
+  // Filter users for current base, defensive check if users is array
+  const personnelForBase = Array.isArray(users)
+    ? users.filter(
+        (u) =>
+          u.role === "personnel" &&
+          normalizeId(u.baseId?._id || u.baseId) === normalizeId(formData.base)
+      )
+    : [];
+
+  // Defensive base name lookup
+  const baseName =
+    Array.isArray(bases) &&
+    bases.find((b) => normalizeId(b._id) === normalizeId(formData.base))?.name;
 
   return (
     <div>
@@ -214,11 +267,7 @@ const Assignments = () => {
             ) : (
               <input
                 type="text"
-                value={
-                  bases.find(
-                    (b) => normalizeId(b._id) === normalizeId(formData.base)
-                  )?.name || "Unknown"
-                }
+                value={baseName || "Unknown"}
                 readOnly
                 className="w-full border px-3 py-2 rounded bg-gray-200 cursor-not-allowed"
               />
@@ -234,7 +283,7 @@ const Assignments = () => {
               className="w-full border px-3 py-2 rounded"
               required
             >
-              <option value="">Select equipment type</option>
+              <option value="">Select equipment</option>
               {assetTypes.map((a) => (
                 <option key={a._id} value={a._id}>
                   {a.name}
@@ -247,8 +296,8 @@ const Assignments = () => {
             <label className="block font-semibold mb-1">Quantity</label>
             <input
               type="number"
-              min={1}
               name="quantity"
+              min="1"
               value={formData.quantity}
               onChange={handleChange}
               className="w-full border px-3 py-2 rounded"
@@ -258,45 +307,54 @@ const Assignments = () => {
 
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             disabled={assigning}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-300"
           >
             {assigning ? "Assigning..." : "Assign"}
           </button>
         </form>
       )}
 
-      <div>
+      <div className="p-4">
         {loading ? (
           <p>Loading assignments...</p>
-        ) : allAssignments.length === 0 ? (
+        ) : filteredAssignments.length === 0 ? (
           <p>No assignments found.</p>
         ) : (
-          <div className="space-y-4">
-            {allAssignments.map((a) => (
-              <Card key={a._id}>
-                <p>
-                  <strong>Personnel:</strong>{" "}
-                  {a.assignedTo?.serviceId || a.assignedTo || "N/A"} -{" "}
-                  {a.assignedTo?.name || ""}
-                </p>
-                <p>
-                  <strong>Base:</strong> {a.base?.name || a.base}
-                </p>
-                <p>
-                  <strong>Equipment Type:</strong>{" "}
-                  {a.assetType?.name || a.assetType}
-                </p>
-                <p>
-                  <strong>Quantity:</strong> {a.quantity}
-                </p>
-                <p>
-                  <strong>Assigned On:</strong>{" "}
-                  {new Date(a.createdAt).toLocaleDateString()}
-                </p>
-              </Card>
-            ))}
-          </div>
+          filteredAssignments.map((assignment) => (
+            <div
+              key={assignment._id}
+              className="bg-white border rounded-lg p-4 mb-4 shadow-md"
+            >
+              <div className="flex justify-between">
+                <div>
+                  <p className="font-semibold text-lg">
+                    {assignment.assetType?.name || "Unknown Equipment"}
+                  </p>
+                  <p>Quantity: {assignment.quantity ?? "N/A"}</p>
+                  <p>
+                    Assigned To:{" "}
+                    {typeof assignment.assignedTo === "string"
+                      ? assignment.assignedTo
+                      : assignment.assignedTo?.serviceId || "Unknown"}
+                  </p>
+                  <p>Base: {assignment.base?.name || "Unknown Base"}</p>
+                  <p>
+                    Assigned By:{" "}
+                    {typeof assignment.assignedBy === "string"
+                      ? assignment.assignedBy
+                      : assignment.assignedBy?.serviceId || "Unknown"}
+                  </p>
+                  <p>
+                    Date:{" "}
+                    {new Date(
+                      assignment.date || assignment.createdAt
+                    ).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

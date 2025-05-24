@@ -55,7 +55,13 @@ function App() {
             {/* Assignments only for admin & base-commander */}
             <Route
               element={
-                <ProtectedRoute allowedRoles={["admin", "base commander"]} />
+                <ProtectedRoute
+                  allowedRoles={[
+                    "admin",
+                    "base commander",
+                    "logistics officer",
+                  ]}
+                />
               }
             >
               <Route path="assignments" element={<Assignments />} />
