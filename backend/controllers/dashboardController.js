@@ -13,7 +13,7 @@ exports.getDashboardData = async (req, res) => {
     const { base, assetType, startDate, endDate } = req.query;
     const { role, base: userBase, id: userId } = req.user;
 
-    const normalizedRole = role.toLowerCase(); // 🔑 Convert to lowercase
+    const normalizedRole = role.toLowerCase();
 
     const baseId =
       base && isValidObjectId(base) ? new mongoose.Types.ObjectId(base) : null;
@@ -23,8 +23,16 @@ exports.getDashboardData = async (req, res) => {
         : null;
 
     const dateFilter = {};
-    if (startDate) dateFilter.$gte = new Date(startDate);
-    if (endDate) dateFilter.$lte = new Date(endDate);
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+      dateFilter.$gte = start;
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+      dateFilter.$lte = end;
+    }
 
     const addDateFilter = (filter, field = "timestamp") => {
       if (startDate || endDate) {
@@ -35,30 +43,25 @@ exports.getDashboardData = async (req, res) => {
     const purchaseFilter = { type: "purchase" };
     const transfersInFilter = {};
     const transfersOutFilter = {};
-    const assignedFilter = { isExpended: false };
-    const expendedFilter = { isExpended: true };
+    const assignedFilter = {};
 
-    // ✅ Lowercase role comparison
     if (normalizedRole === "admin") {
       if (baseId) {
         purchaseFilter.base = baseId;
         transfersInFilter.toBase = baseId;
         transfersOutFilter.fromBase = baseId;
         assignedFilter.base = baseId;
-        expendedFilter.base = baseId;
       }
     } else if (
       ["base commander", "logistics officer"].includes(normalizedRole)
     ) {
-      const effectiveBaseId = baseId || new mongoose.Types.ObjectId(userBase); // allow override from query
+      const effectiveBaseId = baseId || new mongoose.Types.ObjectId(userBase);
       purchaseFilter.base = effectiveBaseId;
       transfersInFilter.toBase = effectiveBaseId;
       transfersOutFilter.fromBase = effectiveBaseId;
       assignedFilter.base = effectiveBaseId;
-      expendedFilter.base = effectiveBaseId;
     } else if (normalizedRole === "personnel") {
       assignedFilter.assignedTo = userId;
-      expendedFilter.assignedTo = userId;
     } else {
       return res.status(403).json({ message: "Unauthorized role" });
     }
@@ -68,14 +71,12 @@ exports.getDashboardData = async (req, res) => {
       transfersInFilter.assetType = assetTypeId;
       transfersOutFilter.assetType = assetTypeId;
       assignedFilter.assetType = assetTypeId;
-      expendedFilter.assetType = assetTypeId;
     }
 
-    addDateFilter(purchaseFilter);
+    addDateFilter(purchaseFilter, "timestamp");
     addDateFilter(transfersInFilter, "date");
     addDateFilter(transfersOutFilter, "date");
     addDateFilter(assignedFilter, "date");
-    addDateFilter(expendedFilter, "date");
 
     const purchases = await AssetTransaction.aggregate([
       { $match: purchaseFilter },
@@ -97,11 +98,6 @@ exports.getDashboardData = async (req, res) => {
       { $group: { _id: "$assetType", total: { $sum: "$quantity" } } },
     ]);
 
-    const expended = await Assignment.aggregate([
-      { $match: expendedFilter },
-      { $group: { _id: "$assetType", total: { $sum: "$quantity" } } },
-    ]);
-
     const sumTotals = (arr) => arr.reduce((acc, item) => acc + item.total, 0);
 
     const data = {
@@ -109,21 +105,19 @@ exports.getDashboardData = async (req, res) => {
       transfersIn,
       transfersOut,
       assigned,
-      expended,
       netMovement:
         sumTotals(purchases) + sumTotals(transfersIn) - sumTotals(transfersOut),
       closingBalance:
         sumTotals(purchases) +
         sumTotals(transfersIn) -
         sumTotals(transfersOut) -
-        sumTotals(assigned) -
-        sumTotals(expended),
+        sumTotals(assigned),
     };
+
     console.log("purchaseFilter:", purchaseFilter);
     console.log("transfersInFilter:", transfersInFilter);
     console.log("transfersOutFilter:", transfersOutFilter);
     console.log("assignedFilter:", assignedFilter);
-    console.log("expendedFilter:", expendedFilter);
 
     res.json({ data });
   } catch (err) {
