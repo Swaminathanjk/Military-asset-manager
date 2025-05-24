@@ -21,7 +21,7 @@ const Purchases = () => {
   const [loading, setLoading] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
 
-  console.log(filteredPurchases);
+  
 
   const canPurchase =
     user?.role === "admin" || user?.role === "logistics officer";

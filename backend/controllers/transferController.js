@@ -44,7 +44,7 @@ exports.createTransfer = async (req, res) => {
       actualFromBase = user.baseId;
     }
 
-    // Calculate available quantity like assignment controller
+    // Calculate available quantity
     const transactions = await AssetTransaction.find({
       assetType,
       base: actualFromBase,
@@ -78,6 +78,28 @@ exports.createTransfer = async (req, res) => {
     });
 
     await transfer.save();
+
+    // Log the asset transactions (transfer-out from fromBase, transfer-in to toBase)
+    await AssetTransaction.insertMany([
+      {
+        assetType,
+        base: actualFromBase,
+        quantity,
+        type: "transfer-out",
+        reference: transfer._id,
+        referenceModel: "Transfer",
+        timestamp: new Date(),
+      },
+      {
+        assetType,
+        base: toBase,
+        quantity,
+        type: "transfer-in",
+        reference: transfer._id,
+        referenceModel: "Transfer",
+        timestamp: new Date(),
+      },
+    ]);
 
     res.status(201).json({ message: "Transfer recorded", data: transfer });
   } catch (err) {

@@ -10,4 +10,6 @@ router.get('/base/:baseId', assetTypeController.getAssetTypeByBase);
 router.put('/:id', assetTypeController.updateAssetType);
 router.delete('/:id', assetTypeController.deleteAssetType);
 
+
+
 module.exports = router;

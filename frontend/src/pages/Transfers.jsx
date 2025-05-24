@@ -51,6 +51,8 @@ const Transfers = () => {
   const [loading, setLoading] = useState(false);
   const [transferring, setTransferring] = useState(false);
 
+  
+  
   // Role check: who can do transfers
   const canTransfer =
     user?.role === "admin" || user?.role === "logistics officer";
@@ -66,7 +68,7 @@ const Transfers = () => {
 
   // Fetch bases on mount if user can transfer
   useEffect(() => {
-    if (!user || !canTransfer) return;
+    if (!user) return;
 
     const fetchBases = async () => {
       try {
@@ -87,7 +89,7 @@ const Transfers = () => {
     };
 
     fetchBases();
-  }, [user, canTransfer]);
+  }, [user]);
 
   // Fetch outgoing and incoming transfers when user or bases change
   useEffect(() => {
@@ -147,7 +149,7 @@ const Transfers = () => {
     };
 
     fetchAssetTypesForBase();
-  }, [formData.fromBase]);
+  }, [formData.fromBase,formData.toBase]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -297,7 +299,7 @@ const Transfers = () => {
               </option>
               {assetTypes.map((type) => (
                 <option key={type._id || type.id} value={type._id || type.id}>
-                  {type.name}
+                  {type.name} - {type.netQuantity}
                 </option>
               ))}
             </select>

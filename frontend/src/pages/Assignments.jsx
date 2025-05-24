@@ -96,27 +96,30 @@ const Assignments = () => {
 
     const fetchAssetTypesForBase = async () => {
       try {
-        // Fetch asset types for the selected base only
-        const res = await api.get(`/asset-types/base/${formData.base}`); 
+        // Fetch net quantity asset types for the selected base
+        const res = await api.get(`/asset-types/base/${formData.base}`);
 
-        // Defensive check for data array
+        // Make sure data is an array
         const data = Array.isArray(res.data) ? res.data : [];
 
+        // Set asset types (with net quantities)
         setAssetTypes(data);
+
+        // Reset asset type selection
         setFormData((prev) => ({
           ...prev,
-          assetType: "", // Reset selected assetType on base change
+          assetType: "",
         }));
       } catch (err) {
         console.error("Failed to fetch asset types for base:", err);
-        toast.error("Failed to load equipment types for selected base");
+        toast.error("Failed to load available asset types for selected base");
         setAssetTypes([]);
         setFormData((prev) => ({ ...prev, assetType: "" }));
       }
     };
 
     fetchAssetTypesForBase();
-  }, [formData.base]);
+  }, [formData.base, filteredAssignments]);
 
   // Fetch assignments based on role
   useEffect(() => {
@@ -347,7 +350,7 @@ const Assignments = () => {
               </option>
               {assetTypes.map((a) => (
                 <option key={a._id} value={a._id}>
-                  {a.name}
+                  {a.name} - {a.netQuantity}
                 </option>
               ))}
             </select>
