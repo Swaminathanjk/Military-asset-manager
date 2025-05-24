@@ -24,18 +24,20 @@ const Purchases = () => {
   console.log(filteredPurchases);
 
   const canPurchase =
-    user?.role === "admin" ||
-    user?.role === "base commander" ||
-    user?.role === "logistics officer";
+    user?.role === "admin" || user?.role === "logistics officer";
 
   useEffect(() => {
-    if (!user || !canPurchase) return;
+    if (!user) return;
 
     const fetchBases = async () => {
       try {
         const basesRes = await api.get("/bases");
-        setBases(Array.isArray(basesRes.data.data) ? basesRes.data.data : []);
+        const baseList = Array.isArray(basesRes.data.data)
+          ? basesRes.data.data
+          : [];
+        setBases(baseList);
 
+        // Only auto-fill base in form if role is logistics officer or base commander
         if (
           (user.role === "base commander" ||
             user.role === "logistics officer") &&
@@ -53,7 +55,7 @@ const Purchases = () => {
     };
 
     fetchBases();
-  }, [user, canPurchase]);
+  }, [user]);
 
   useEffect(() => {
     if (!formData.base) {
