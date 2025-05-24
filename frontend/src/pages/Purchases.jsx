@@ -21,6 +21,8 @@ const Purchases = () => {
   const [loading, setLoading] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
 
+  console.log(filteredPurchases);
+
   const canPurchase =
     user?.role === "admin" ||
     user?.role === "base commander" ||
@@ -34,7 +36,11 @@ const Purchases = () => {
         const basesRes = await api.get("/bases");
         setBases(Array.isArray(basesRes.data.data) ? basesRes.data.data : []);
 
-        if (user.role === "base commander" && user.baseId) {
+        if (
+          (user.role === "base commander" ||
+            user.role === "logistics officer") &&
+          user.baseId
+        ) {
           setFormData((prev) => ({
             ...prev,
             base: normalizeId(user.baseId._id || user.baseId),
@@ -193,7 +199,7 @@ const Purchases = () => {
         >
           <div>
             <label className="block font-semibold mb-1">Base</label>
-            {user.role === "admin" || user.role === "logistics officer" ? (
+            {user.role === "admin" ? (
               <select
                 name="base"
                 value={formData.base}
@@ -208,10 +214,20 @@ const Purchases = () => {
                   </option>
                 ))}
               </select>
+            ) : user.role === "logistics officer" ? (
+              <input
+                type="text"
+                value={
+                  bases.find((b) => b._id === (user.baseId._id || user.baseId))
+                    ?.name || "Unknown Base"
+                }
+                readOnly
+                className="w-full border px-3 py-2 rounded bg-gray-200 cursor-not-allowed"
+              />
             ) : (
               <input
                 type="text"
-                value={baseName || "Unknown"}
+                value="Unknown"
                 readOnly
                 className="w-full border px-3 py-2 rounded bg-gray-200 cursor-not-allowed"
               />
@@ -226,14 +242,14 @@ const Purchases = () => {
               onChange={handleChange}
               className="w-full border px-3 py-2 rounded"
               required
-              disabled={!formData.base || assetTypes.length === 0}
+              disabled={assetTypes.length === 0 || !formData.base}
             >
               <option value="">
-                {formData.base
-                  ? assetTypes.length === 0
-                    ? "No types available"
-                    : "Select equipment type"
-                  : "Select base first"}
+                {!formData.base
+                  ? "Select base first"
+                  : assetTypes.length === 0
+                  ? "No types available"
+                  : "Select equipment type"}
               </option>
               {assetTypes.map((type) => (
                 <option key={type._id || type.id} value={type._id || type.id}>

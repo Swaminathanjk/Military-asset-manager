@@ -12,10 +12,10 @@ exports.register = async (req, res) => {
         .json({ message: "`baseId` is required for non-admin users" });
     }
 
-    if (role === "personnel" && !serviceId) {
+    if (role !== "admin" && !serviceId) {
       return res
         .status(400)
-        .json({ message: "`serviceId` is required for personnel" });
+        .json({ message: "`serviceId` is required for non-admin users" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
       password: hashedPassword,
       role,
       baseId: role !== "admin" ? baseId : undefined,
-      serviceId: role === "personnel" ? serviceId : undefined,
+      serviceId: role !== "admin" ? serviceId : undefined,
     });
 
     await newUser.save();
@@ -86,7 +86,7 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         role: user.role,
-        serviceId: user.serviceId, 
+        serviceId: user.serviceId,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
