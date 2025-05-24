@@ -6,6 +6,7 @@ const assetTypeController = require('../controllers/assetTypeController');
 router.post('/', assetTypeController.createAssetType);
 router.get('/', assetTypeController.getAssetTypes);
 router.get('/:id', assetTypeController.getAssetTypeById);
+router.get('/base/:baseId', assetTypeController.getAssetTypeByBase);
 router.put('/:id', assetTypeController.updateAssetType);
 router.delete('/:id', assetTypeController.deleteAssetType);
 

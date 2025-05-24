@@ -1,5 +1,5 @@
 // controllers/purchaseController.js
-const AssetTransaction = require('../models/AssetTransaction');
+const AssetTransaction = require("../models/AssetTransaction");
 
 exports.createPurchase = async (req, res) => {
   try {
@@ -9,14 +9,39 @@ exports.createPurchase = async (req, res) => {
       assetType,
       base,
       quantity,
-      type: 'purchase' 
+      type: "purchase",
     });
 
     await newPurchase.save();
-    res.status(201).json({ message: 'Purchase recorded successfully', data: newPurchase });
+    res
+      .status(201)
+      .json({ message: "Purchase recorded successfully", data: newPurchase });
   } catch (err) {
-    console.error('Error creating purchase:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error creating purchase:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPurchasesByBase = async (req, res) => {
+  try {
+    const { baseId } = req.params;
+
+    if (!baseId) {
+      return res.status(400).json({ message: "Base ID is required" });
+    }
+
+    const purchases = await AssetTransaction.find({
+      type: "purchase",
+      base: baseId,
+    })
+      .populate("assetType")
+      .populate("base")
+      .sort({ timestamp: -1 });
+
+    res.json({ data: purchases });
+  } catch (err) {
+    console.error("Error fetching purchases by base:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -24,7 +49,7 @@ exports.getPurchases = async (req, res) => {
   try {
     const { base, assetType, startDate, endDate } = req.query;
 
-    const filter = { type: 'purchase' };
+    const filter = { type: "purchase" };
 
     if (base) filter.base = base;
     if (assetType) filter.assetType = assetType;
@@ -35,13 +60,13 @@ exports.getPurchases = async (req, res) => {
     }
 
     const purchases = await AssetTransaction.find(filter)
-      .populate('assetType')
-      .populate('base')
+      .populate("assetType")
+      .populate("base")
       .sort({ timestamp: -1 });
 
     res.json({ data: purchases });
   } catch (err) {
-    console.error('Error fetching purchases:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching purchases:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };

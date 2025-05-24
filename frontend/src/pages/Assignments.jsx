@@ -6,6 +6,29 @@ import { toast } from "react-toastify";
 
 const Assignments = () => {
   const { user } = useAuth();
+  const CommanderCard = ({ user, baseName }) => {
+    if (!user || user.role !== "base commander") return null;
+
+    return (
+      <div className="mb-6 bg-green-50 border-green-400 border p-4 rounded shadow">
+        <h3 className="text-xl font-semibold mb-2 text-green-700">
+          Base Commander Details
+        </h3>
+        <p>
+          <strong>Name:</strong> {user.name || "N/A"}
+        </p>
+        <p>
+          <strong>Email:</strong> {user.email || "N/A"}
+        </p>
+        <p>
+          <strong>Service ID:</strong> {user.serviceId || "N/A"}
+        </p>
+        <p>
+          <strong>Base:</strong> {baseName || "N/A"}
+        </p>
+      </div>
+    );
+  };
 
   const normalizeId = (id) => (id ? id.toString() : "");
 
@@ -26,37 +49,32 @@ const Assignments = () => {
 
   const canAssign = user?.role === "admin" || user?.role === "base commander";
 
-  // Fetch form data: bases, asset types, users
+  // Fetch form data: bases, users (but NOT asset types yet)
   useEffect(() => {
     if (!canAssign || !user) return;
 
     const fetchFormData = async () => {
       try {
-        const [basesRes, assetTypesRes, usersRes] = await Promise.all([
+        const [basesRes, usersRes] = await Promise.all([
           api.get("/bases"),
-          api.get("/asset-types"),
           api.get("/users"),
         ]);
 
-        // Defensive: ensure data arrays
         const basesData = Array.isArray(basesRes.data.data)
           ? basesRes.data.data
-          : [];
-        const assetTypesData = Array.isArray(assetTypesRes.data)
-          ? assetTypesRes.data
           : [];
         const usersData = Array.isArray(usersRes.data.data)
           ? usersRes.data.data
           : [];
 
         setBases(basesData);
-        setAssetTypes(assetTypesData);
         setUsers(usersData);
 
         if (user.role === "base commander" && user.baseId) {
+          const baseIdNormalized = normalizeId(user.baseId._id || user.baseId);
           setFormData((prev) => ({
             ...prev,
-            base: normalizeId(user.baseId._id || user.baseId),
+            base: baseIdNormalized,
           }));
         }
       } catch (err) {
@@ -68,6 +86,38 @@ const Assignments = () => {
     fetchFormData();
   }, [user, canAssign]);
 
+  // Fetch asset types when base changes and base is selected
+  useEffect(() => {
+    if (!formData.base) {
+      setAssetTypes([]); // Clear asset types if no base selected
+      setFormData((prev) => ({ ...prev, assetType: "" })); // Clear selected assetType
+      return;
+    }
+
+    const fetchAssetTypesForBase = async () => {
+      try {
+        // Fetch asset types for the selected base only
+        const res = await api.get(`/asset-types/${formData.base}`);
+
+        // Defensive check for data array
+        const data = Array.isArray(res.data) ? res.data : [];
+
+        setAssetTypes(data);
+        setFormData((prev) => ({
+          ...prev,
+          assetType: "", // Reset selected assetType on base change
+        }));
+      } catch (err) {
+        console.error("Failed to fetch asset types for base:", err);
+        toast.error("Failed to load equipment types for selected base");
+        setAssetTypes([]);
+        setFormData((prev) => ({ ...prev, assetType: "" }));
+      }
+    };
+
+    fetchAssetTypesForBase();
+  }, [formData.base]);
+
   // Fetch assignments based on role
   useEffect(() => {
     if (!user) return;
@@ -78,14 +128,15 @@ const Assignments = () => {
         let url = "/assignments";
         if (user.role === "personnel") {
           url = `/assignments/personnel/${user.serviceId}`;
-        } else if (user.role === "base commander") {
-          // NOTE: since you said no API for /assignments/base/:id, fallback to /assignments and filter client side
+        } else if (
+          user.role === "base commander" ||
+          user.role === "logistics officer"
+        ) {
           url = "/assignments";
         }
 
         const res = await api.get(url);
 
-        // Defensive: check response is array
         const allAssignments = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data.data)
@@ -94,8 +145,11 @@ const Assignments = () => {
 
         setAssignments(allAssignments);
 
-        // Filter assignments by base for base commander or personnel
-        if (user.role === "base commander" && user.baseId) {
+        if (
+          (user.role === "base commander" ||
+            user.role === "logistics officer") &&
+          user.baseId
+        ) {
           const filtered = allAssignments.filter(
             (a) =>
               normalizeId(a.base?._id || a.base) ===
@@ -103,7 +157,6 @@ const Assignments = () => {
           );
           setFilteredAssignments(filtered);
         } else if (user.role === "personnel") {
-          // Filter by assignedTo serviceId (if API doesn't do it)
           const filtered = allAssignments.filter(
             (a) =>
               a.assignedTo === user.serviceId ||
@@ -111,7 +164,6 @@ const Assignments = () => {
           );
           setFilteredAssignments(filtered);
         } else {
-          // admin or others: show all
           setFilteredAssignments(allAssignments);
         }
       } catch (err) {
@@ -129,7 +181,10 @@ const Assignments = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // base commander cannot change base selection
     if (name === "base" && user.role === "base commander") return;
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -178,7 +233,6 @@ const Assignments = () => {
 
       setAssignments(allAssignments);
 
-      // Re-apply filter based on role
       if (user.role === "base commander" && user.baseId) {
         const filtered = allAssignments.filter(
           (a) =>
@@ -282,8 +336,15 @@ const Assignments = () => {
               onChange={handleChange}
               className="w-full border px-3 py-2 rounded"
               required
+              disabled={!formData.base || assetTypes.length === 0}
             >
-              <option value="">Select equipment</option>
+              <option value="">
+                {formData.base
+                  ? assetTypes.length === 0
+                    ? "No equipment found for base"
+                    : "Select equipment"
+                  : "Select base first"}
+              </option>
               {assetTypes.map((a) => (
                 <option key={a._id} value={a._id}>
                   {a.name}
@@ -314,49 +375,66 @@ const Assignments = () => {
           </button>
         </form>
       )}
+      <h3 className="text-xl font-semibold mb-2">Current Assignments</h3>
 
-      <div className="p-4">
-        {loading ? (
-          <p>Loading assignments...</p>
-        ) : filteredAssignments.length === 0 ? (
-          <p>No assignments found.</p>
-        ) : (
-          filteredAssignments.map((assignment) => (
-            <div
-              key={assignment._id}
-              className="bg-white border rounded-lg p-4 mb-4 shadow-md"
-            >
-              <div className="flex justify-between">
-                <div>
-                  <p className="font-semibold text-lg">
-                    {assignment.assetType?.name || "Unknown Equipment"}
-                  </p>
-                  <p>Quantity: {assignment.quantity ?? "N/A"}</p>
-                  <p>
-                    Assigned To:{" "}
-                    {typeof assignment.assignedTo === "string"
-                      ? assignment.assignedTo
-                      : assignment.assignedTo?.serviceId || "Unknown"}
-                  </p>
-                  <p>Base: {assignment.base?.name || "Unknown Base"}</p>
-                  <p>
-                    Assigned By:{" "}
-                    {typeof assignment.assignedBy === "string"
-                      ? assignment.assignedBy
-                      : assignment.assignedBy?.serviceId || "Unknown"}
-                  </p>
-                  <p>
-                    Date:{" "}
-                    {new Date(
-                      assignment.date || assignment.createdAt
-                    ).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      {loading ? (
+        <p>Loading assignments...</p>
+      ) : filteredAssignments.length === 0 ? (
+        <p>No assignments found.</p>
+      ) : (
+        <table className="w-full border-collapse border border-gray-300 rounded shadow">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border border-gray-300 p-2">Personnel</th>
+              <th className="border border-gray-300 p-2">Base</th>
+              <th className="border border-gray-300 p-2">Asset Type</th>
+              <th className="border border-gray-300 p-2">Quantity</th>
+              <th className="border border-gray-300 p-2">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredAssignments.map((a) => {
+              const personnelObj =
+                typeof a.assignedTo === "object"
+                  ? a.assignedTo
+                  : users.find(
+                      (u) =>
+                        u.serviceId === a.assignedTo || u._id === a.assignedTo
+                    );
+
+              const personnelId =
+                personnelObj?.serviceId || personnelObj?._id || a.assignedTo;
+              const personnelName = personnelObj?.name || a.assignedTo;
+
+              return (
+                <tr key={a._id} className="hover:bg-green-50">
+                  <td className="border border-gray-300 p-2">
+                    {personnelId} - {personnelName}
+                  </td>
+                  <td className="border border-gray-300 p-2">
+                    {a.base?.name || a.base}
+                  </td>
+                  <td className="border border-gray-300 p-2">
+                    {a.assetType?.name || a.assetType}
+                  </td>
+                  <td className="border border-gray-300 p-2">{a.quantity}</td>
+                  <td className="border border-gray-300 p-2">
+                    {a.date
+                      ? new Date(a.date).toLocaleString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "-"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
