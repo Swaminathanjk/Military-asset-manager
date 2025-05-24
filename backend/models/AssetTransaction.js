@@ -12,7 +12,9 @@ const assetTransactionSchema = new mongoose.Schema({
   },
   reference: { type: mongoose.Schema.Types.ObjectId, refPath: 'referenceModel' },
   referenceModel: { type: String }, // e.g., 'Transfer', 'Assignment'
+  purchasedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // ✅ NEW
   timestamp: { type: Date, default: Date.now },
 }, { timestamps: true });
+
 
 module.exports = mongoose.model('AssetTransaction', assetTransactionSchema);
