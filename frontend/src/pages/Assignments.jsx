@@ -97,7 +97,7 @@ const Assignments = () => {
     const fetchAssetTypesForBase = async () => {
       try {
         // Fetch asset types for the selected base only
-        const res = await api.get(`/asset-types/${formData.base}`);
+        const res = await api.get(`/asset-types/base/${formData.base}`); 
 
         // Defensive check for data array
         const data = Array.isArray(res.data) ? res.data : [];

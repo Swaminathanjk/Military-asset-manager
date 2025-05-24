@@ -60,6 +60,7 @@ function App() {
                     "admin",
                     "base commander",
                     "logistics officer",
+                    "personnel",
                   ]}
                 />
               }
