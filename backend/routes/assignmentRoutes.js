@@ -7,6 +7,6 @@ router.use(verifyToken);
 
 router.post('/', controller.createAssignment);
 router.get('/', controller.getAllAssignments);
-router.put('/:id/status', controller.updateAssignmentStatus);
+router.get("/personnel/:serviceId", controller.getPersonnelAssignments);
 
 module.exports = router;

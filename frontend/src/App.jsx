@@ -39,7 +39,13 @@ function App() {
             {/* Purchases and Transfers only for admin & logistics-officer */}
             <Route
               element={
-                <ProtectedRoute allowedRoles={["admin", "logistics-officer"]} />
+                <ProtectedRoute
+                  allowedRoles={[
+                    "admin",
+                    "logistics officer",
+                    "base commander",
+                  ]}
+                />
               }
             >
               <Route path="purchases" element={<Purchases />} />
@@ -49,7 +55,7 @@ function App() {
             {/* Assignments only for admin & base-commander */}
             <Route
               element={
-                <ProtectedRoute allowedRoles={["admin", "base-commander"]} />
+                <ProtectedRoute allowedRoles={["admin", "base commander"]} />
               }
             >
               <Route path="assignments" element={<Assignments />} />

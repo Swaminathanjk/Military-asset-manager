@@ -47,13 +47,15 @@ exports.getDashboardData = async (req, res) => {
         assignedFilter.base = baseId;
         expendedFilter.base = baseId;
       }
-    } else if (["base commander", "logistics officer"].includes(normalizedRole)) {
-      const userBaseId = new mongoose.Types.ObjectId(userBase);
-      purchaseFilter.base = userBaseId;
-      transfersInFilter.toBase = userBaseId;
-      transfersOutFilter.fromBase = userBaseId;
-      assignedFilter.base = userBaseId;
-      expendedFilter.base = userBaseId;
+    } else if (
+      ["base commander", "logistics officer"].includes(normalizedRole)
+    ) {
+      const effectiveBaseId = baseId || new mongoose.Types.ObjectId(userBase); // allow override from query
+      purchaseFilter.base = effectiveBaseId;
+      transfersInFilter.toBase = effectiveBaseId;
+      transfersOutFilter.fromBase = effectiveBaseId;
+      assignedFilter.base = effectiveBaseId;
+      expendedFilter.base = effectiveBaseId;
     } else if (normalizedRole === "personnel") {
       assignedFilter.assignedTo = userId;
       expendedFilter.assignedTo = userId;
@@ -117,6 +119,11 @@ exports.getDashboardData = async (req, res) => {
         sumTotals(assigned) -
         sumTotals(expended),
     };
+    console.log("purchaseFilter:", purchaseFilter);
+    console.log("transfersInFilter:", transfersInFilter);
+    console.log("transfersOutFilter:", transfersOutFilter);
+    console.log("assignedFilter:", assignedFilter);
+    console.log("expendedFilter:", expendedFilter);
 
     res.json({ data });
   } catch (err) {

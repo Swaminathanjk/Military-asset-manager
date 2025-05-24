@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     serviceId: {
       type: String,
       required: function () {
-        return this.role === "personnel";
+        return this.role !== "admin";
       },
       unique: true,
       sparse: true, // Only creates unique index when not null
