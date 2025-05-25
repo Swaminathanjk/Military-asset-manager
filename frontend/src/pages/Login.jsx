@@ -70,6 +70,17 @@ const Login = () => {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+        <div className="mt-6 text-center text-sm">
+          <p>
+            Don't have an account?
+            <a
+              href="/signup"
+              className="text-blue-600 hover:underline font-medium"
+            >
+              Sign up here
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

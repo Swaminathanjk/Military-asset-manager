@@ -7,5 +7,6 @@ router.use(verifyToken);
 
 router.post('/', controller.createTransfer);
 router.get('/', controller.getTransfers);
+router.get('/all', controller.getAllTransfers);
  
 module.exports = router;

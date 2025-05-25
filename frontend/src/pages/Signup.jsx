@@ -8,6 +8,8 @@ const Signup = () => {
   const { login } = useAuth();
 
   const [bases, setBases] = useState([]);
+  // console.log("bases:", bases);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -52,9 +54,6 @@ const Signup = () => {
 
       if (formData.role !== "admin") {
         payload.baseId = formData.baseId;
-      }
-
-      if (formData.role === "personnel") {
         payload.serviceId = formData.serviceId;
       }
 
@@ -127,8 +126,8 @@ const Signup = () => {
             >
               <option value="">Select Role</option>
               <option value="admin">Admin</option>
-              <option value="commander">Commander</option>
-              <option value="logistics">Logistics</option>
+              <option value="base commander">Commander</option>
+              <option value="logistics officer">Logistics</option>
               <option value="personnel">Personnel</option>
             </select>
           </div>
@@ -147,17 +146,19 @@ const Signup = () => {
                 <option value="">Select Base</option>
                 {bases.map((base) => (
                   <option key={base._id} value={base._id}>
-                    {base.name}
+                    {base.name} - {base.location}
                   </option>
                 ))}
               </select>
             </div>
           )}
 
-          {/* Show Service ID only if role is personnel */}
-          {formData.role === "personnel" && (
+          {/* Show Service ID only if role is not admin */}
+          {formData.role && formData.role !== "admin" && (
             <div>
-              <label className="block text-sm font-medium">Service ID</label>
+              <label className="block text-sm font-medium">
+                Service ID (without prefix)
+              </label>
               <input
                 type="text"
                 name="serviceId"

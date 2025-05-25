@@ -221,3 +221,33 @@ exports.getTransfersByBase = async (req, res) => {
       .json({ message: "Error fetching transfers by base" });
   }
 };
+
+exports.getAllTransfers = async (req, res) => {
+  try {
+    const { assetType, startDate, endDate } = req.query;
+
+    const filter = {};
+
+    if (assetType && mongoose.Types.ObjectId.isValid(assetType)) {
+      filter.assetType = assetType;
+    }
+
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate);
+      if (endDate) filter.date.$lte = new Date(endDate);
+    }
+
+    const transfers = await Transfer.find(filter)
+      .populate("fromBase")
+      .populate("toBase")
+      .populate("assetType")
+      .populate("initiatedBy", "name role")
+      .sort({ date: -1 });
+
+    res.json({ data: transfers });
+  } catch (err) {
+    console.error("Error fetching all transfers:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

@@ -51,8 +51,6 @@ const Transfers = () => {
   const [loading, setLoading] = useState(false);
   const [transferring, setTransferring] = useState(false);
 
-  
-  
   // Role check: who can do transfers
   const canTransfer =
     user?.role === "admin" || user?.role === "logistics officer";
@@ -93,26 +91,35 @@ const Transfers = () => {
 
   // Fetch outgoing and incoming transfers when user or bases change
   useEffect(() => {
-    if (!user || !user.baseId) return;
+    if (!user) return;
 
     const fetchTransfers = async () => {
       setLoading(true);
       try {
-        const [outgoingRes, incomingRes] = await Promise.all([
-          api.get(
-            `/transfers?fromBase=${normalizeId(user.baseId._id || user.baseId)}`
-          ),
-          api.get(
-            `/transfers?toBase=${normalizeId(user.baseId._id || user.baseId)}`
-          ),
-        ]);
+        // Admin with no baseId: get all transfers
+        if (user.role === "admin" && !user.baseId) {
+          const allTransfersRes = await api.get("/transfers/all");
+          const allTransfers = Array.isArray(allTransfersRes.data.data)
+            ? allTransfersRes.data.data
+            : [];
 
-        setOutgoingTransfers(
-          Array.isArray(outgoingRes.data.data) ? outgoingRes.data.data : []
-        );
-        setIncomingTransfers(
-          Array.isArray(incomingRes.data.data) ? incomingRes.data.data : []
-        );
+          setOutgoingTransfers(allTransfers);
+          setIncomingTransfers(allTransfers);
+        } else {
+          // Regular user with baseId: get outgoing and incoming transfers separately
+          const baseId = normalizeId(user?.baseId?._id || user?.baseId);
+          const [outgoingRes, incomingRes] = await Promise.all([
+            api.get(`/transfers?fromBase=${baseId}`),
+            api.get(`/transfers?toBase=${baseId}`),
+          ]);
+
+          setOutgoingTransfers(
+            Array.isArray(outgoingRes.data.data) ? outgoingRes.data.data : []
+          );
+          setIncomingTransfers(
+            Array.isArray(incomingRes.data.data) ? incomingRes.data.data : []
+          );
+        }
       } catch (err) {
         console.error("Transfer fetch error:", err);
         toast.error("Failed to load transfers");
@@ -124,7 +131,7 @@ const Transfers = () => {
     };
 
     fetchTransfers();
-  }, [user]);
+  }, [user, transferring]);
 
   // Fetch asset types when fromBase changes (optional, if needed)
   useEffect(() => {
@@ -149,7 +156,7 @@ const Transfers = () => {
     };
 
     fetchAssetTypesForBase();
-  }, [formData.fromBase,formData.toBase]);
+  }, [formData.fromBase, formData.toBase]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -201,7 +208,7 @@ const Transfers = () => {
       });
 
       // Refresh transfers after submit
-      const baseId = normalizeId(user.baseId._id || user.baseId);
+      const baseId = normalizeId(user?.baseId?._id || user?.baseId);
 
       const [outgoingRes, incomingRes] = await Promise.all([
         api.get(`/transfers?fromBase=${baseId}`),

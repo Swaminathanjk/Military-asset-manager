@@ -3,19 +3,31 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 exports.register = async (req, res) => {
-  const { name, email, password, role, baseId, serviceId } = req.body;
+  let { name, email, password, role, baseId, serviceId } = req.body;
+
   try {
-    // Validate role-based fields
+    // Validate baseId for non-admins
     if (role !== "admin" && !baseId) {
       return res
         .status(400)
         .json({ message: "`baseId` is required for non-admin users" });
     }
 
+    // Validate serviceId for non-admins
     if (role !== "admin" && !serviceId) {
       return res
         .status(400)
         .json({ message: "`serviceId` is required for non-admin users" });
+    }
+
+    // Add prefix based on role (lowercase role check for safety)
+    const roleLower = role.toLowerCase();
+    if (roleLower === "base commander" || roleLower === "commander") {
+      serviceId = "CM" + serviceId;
+    } else if (roleLower === "logistics officer" || roleLower === "logistics") {
+      serviceId = "LG" + serviceId;
+    } else if (roleLower === "personnel") {
+      serviceId = "PS" + serviceId;
     }
 
     const existingUser = await User.findOne({ email });
