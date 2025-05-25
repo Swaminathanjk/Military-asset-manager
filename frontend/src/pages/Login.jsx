@@ -4,6 +4,8 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Link } from "react-router-dom"; 
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -87,12 +89,12 @@ const Login = () => {
         <div className="mt-6 text-center text-sm">
           <p>
             New recruit?{" "}
-            <a
-              href="/signup"
+            <Link
+              to="/signup"
               className="text-green-400 hover:underline font-semibold"
             >
               Sign up here
-            </a>
+            </Link>
           </p>
         </div>
       </div>
