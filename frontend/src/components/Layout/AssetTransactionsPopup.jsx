@@ -46,7 +46,7 @@ const AssetTransactionsPopup = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[80vh] overflow-auto p-6 relative"
+        className="bg-white rounded-lg shadow-lg max-w-6xl w-full max-h-[80vh] overflow-auto p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -72,10 +72,28 @@ const AssetTransactionsPopup = ({
                 <th className="border-b px-4 py-2">Asset Type</th>
                 <th className="border-b px-4 py-2">Base</th>
                 <th className="border-b px-4 py-2">Quantity</th>
-                <th className="border-b px-4 py-2">Reference Details</th>
-                <th className="border-b px-4 py-2">User</th>
+
+                {type === "assignment" && (
+                  <>
+                    <th className="border-b px-4 py-2">Assigned To</th>
+                    <th className="border-b px-4 py-2">Assigned By</th>
+                  </>
+                )}
+
+                {(type === "transfer-in" || type === "transfer-out") && (
+                  <>
+                    <th className="border-b px-4 py-2">From Base</th>
+                    <th className="border-b px-4 py-2">To Base</th>
+                    <th className="border-b px-4 py-2">Initiated By</th>
+                  </>
+                )}
+
+                {type === "purchase" && (
+                  <th className="border-b px-4 py-2">Purchased By</th>
+                )}
               </tr>
             </thead>
+
             <tbody>
               {transactions.map((tx) => (
                 <tr key={tx._id} className="odd:bg-gray-50">
@@ -85,36 +103,37 @@ const AssetTransactionsPopup = ({
                   <td className="border-b px-4 py-2">{tx.assetType?.name}</td>
                   <td className="border-b px-4 py-2">{tx.base?.name}</td>
                   <td className="border-b px-4 py-2">{tx.quantity ?? "-"}</td>
-                  <td className="border-b px-4 py-2">
-                    {/* Reference details vary by type */}
-                    {type === "assignment" && tx.reference ? (
-                      <>
-                        Assigned To: {tx.reference.assignedTo?.name || "-"}{" "}
-                        <br />
-                        Assigned By: {tx.reference.assignedBy?.name || "-"}
-                      </>
-                    ) : type === "purchase" && tx.purchasedBy ? (
-                      <>Purchased By: {tx.purchasedBy.name}</>
-                    ) : (type === "transfer-in" || type === "transfer-out") &&
-                      tx.reference ? (
-                      <>
-                        From: {tx.reference.fromBase?.name || "-"} <br />
-                        To: {tx.reference.toBase?.name || "-"} <br />
-                        Initiated By: {tx.reference.initiatedBy?.name || "-"}
-                      </>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td className="border-b px-4 py-2">
-                    {type === "assignment"
-                      ? tx.reference?.assignedBy?.name || "-"
-                      : type === "purchase"
-                      ? tx.purchasedBy?.name || "-"
-                      : type === "transfer-in" || type === "transfer-out"
-                      ? tx.reference?.initiatedBy?.name || "-"
-                      : "-"}
-                  </td>
+
+                  {type === "assignment" && (
+                    <>
+                      <td className="border-b px-4 py-2">
+                        {tx.reference?.assignedTo?.name || "-"}
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        {tx.reference?.assignedBy?.name || "-"}
+                      </td>
+                    </>
+                  )}
+
+                  {(type === "transfer-in" || type === "transfer-out") && (
+                    <>
+                      <td className="border-b px-4 py-2">
+                        {tx.reference?.fromBase?.name || "-"}
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        {tx.reference?.toBase?.name || "-"}
+                      </td>
+                      <td className="border-b px-4 py-2">
+                        {tx.reference?.initiatedBy?.name || "-"}
+                      </td>
+                    </>
+                  )}
+
+                  {type === "purchase" && (
+                    <td className="border-b px-4 py-2">
+                      {tx.purchasedBy?.name || "-"}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

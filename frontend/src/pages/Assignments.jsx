@@ -286,26 +286,6 @@ const Assignments = () => {
           className="mb-6 max-w-md space-y-4 border p-4 rounded shadow"
         >
           <div>
-            <label className="block font-semibold mb-1">
-              Personnel Service ID
-            </label>
-            <select
-              name="assignedTo"
-              value={formData.assignedTo}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-              required
-            >
-              <option value="">Select personnel</option>
-              {personnelForBase.map((p) => (
-                <option key={p._id} value={p.serviceId || p._id}>
-                  {p.serviceId || p._id} - {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
             <label className="block font-semibold mb-1">Base</label>
             {user.role === "admin" ? (
               <select
@@ -330,6 +310,25 @@ const Assignments = () => {
                 className="w-full border px-3 py-2 rounded bg-gray-200 cursor-not-allowed"
               />
             )}
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">
+              Personnel Service ID
+            </label>
+            <select
+              name="assignedTo"
+              value={formData.assignedTo}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              required
+            >
+              <option value="">Select personnel</option>
+              {personnelForBase.map((p) => (
+                <option key={p._id} value={p.serviceId || p._id}>
+                  {p.serviceId || p._id} - {p.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
