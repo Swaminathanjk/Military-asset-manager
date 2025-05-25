@@ -8,10 +8,29 @@ import Assignments from "./pages/Assignments";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import AppLayout from "./components/Layout/AppLayout";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Optional: Import the military-style font from Google Fonts
+import "@fontsource/rajdhani"; // Make sure you have installed it
 
 function App() {
   return (
     <Router>
+      {/* Global ToastContainer for notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
@@ -30,13 +49,11 @@ function App() {
             />
           }
         >
-          {/* Layout wrapper */}
           <Route path="/" element={<AppLayout />}>
-            {/* Dashboard accessible to all logged in roles */}
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
 
-            {/* Purchases and Transfers only for admin & logistics-officer */}
+            {/* Purchases and Transfers for specific roles */}
             <Route
               element={
                 <ProtectedRoute
@@ -52,7 +69,7 @@ function App() {
               <Route path="transfers" element={<Transfers />} />
             </Route>
 
-            {/* Assignments only for admin & base-commander */}
+            {/* Assignments for designated roles */}
             <Route
               element={
                 <ProtectedRoute
@@ -70,7 +87,7 @@ function App() {
           </Route>
         </Route>
 
-        {/* Catch all for 404 */}
+        {/* 404 Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

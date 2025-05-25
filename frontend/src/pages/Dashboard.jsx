@@ -4,7 +4,7 @@ import Card from "../UI/Card";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
-import AssetTransactionsPopup from "../components/Layout/AssetTransactionsPopup"; // import popup component
+import AssetTransactionsPopup from "../components/Layout/AssetTransactionsPopup";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -24,11 +24,9 @@ const Dashboard = () => {
 
   const [Transactions, setTransactions] = useState([]);
 
-  // New states for popup
   const [popupOpen, setPopupOpen] = useState(false);
-  const [popupType, setPopupType] = useState(""); // e.g. "purchase", "assignment", etc.
+  const [popupType, setPopupType] = useState("");
 
-  // Fetch bases and asset types on mount
   useEffect(() => {
     const fetchFiltersData = async () => {
       try {
@@ -56,7 +54,6 @@ const Dashboard = () => {
     fetchFiltersData();
   }, [user]);
 
-  // Fetch asset types when base changes
   useEffect(() => {
     const fetchAssetTypes = async () => {
       try {
@@ -77,7 +74,6 @@ const Dashboard = () => {
     fetchAssetTypes();
   }, [filters.base]);
 
-  // Handle filter changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -90,7 +86,6 @@ const Dashboard = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  //POPUP effect
   useEffect(() => {
     if (!popupOpen) return;
 
@@ -108,14 +103,12 @@ const Dashboard = () => {
         setTransactions(res.data.data || []);
       } catch (error) {
         console.error("Error fetching transactions:", error);
-        setError("Network error");
       }
     };
 
     fetchTransactions();
   }, [popupOpen, popupType, filters]);
 
-  // Fetch dashboard data
   useEffect(() => {
     if (!user) return;
     fetchDashboardData();
@@ -189,12 +182,9 @@ const Dashboard = () => {
     },
   ];
 
-  // Handler to open popup on card click
   const onCardClick = (type) => {
-    // Only open popup for relevant types where transaction data exists
     const allowedTypes = [
       "assignment",
-
       "purchase",
       "transfer-out",
       "transfer-in",
@@ -206,25 +196,29 @@ const Dashboard = () => {
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">Dashboard</h2>
+    <div className="min-h-screen px-6 py-8 max-w-7xl mx-auto bg-[#1f2d1f] font-[Rajdhani] text-white">
+      <h2 className="text-4xl font-extrabold mb-8 tracking-widest uppercase border-b-4 border-green-600 pb-2">
+        Dashboard
+      </h2>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mb-10">
         <input
           type="date"
           name="startDate"
-          className="border rounded-md p-2"
+          className="border border-green-700 rounded-md p-3 bg-[#213321] text-green-300 placeholder-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition"
           value={filters.startDate}
           onChange={handleChange}
+          placeholder="Start Date"
         />
 
         <input
           type="date"
           name="endDate"
-          className="border rounded-md p-2"
+          className="border border-green-700 rounded-md p-3 bg-[#213321] text-green-300 placeholder-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition"
           value={filters.endDate}
           onChange={handleChange}
+          placeholder="End Date"
         />
 
         {user?.role === "base commander" ||
@@ -232,7 +226,7 @@ const Dashboard = () => {
           <input
             type="text"
             name="base"
-            className="border rounded-md p-2 bg-gray-100 cursor-not-allowed"
+            className="border border-green-700 rounded-md p-3 bg-[#2a3a2a] text-green-500 cursor-not-allowed"
             value={
               bases.find((b) => b._id === filters.base)?.name ||
               user.baseId?.name ||
@@ -244,13 +238,17 @@ const Dashboard = () => {
         ) : (
           <select
             name="base"
-            className="border rounded-md p-2"
+            className="border border-green-700 rounded-md p-3 bg-[#213321] text-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition"
             value={filters.base}
             onChange={handleChange}
           >
             {user?.role === "admin" && <option value="">All Bases</option>}
             {bases.map((base) => (
-              <option key={base._id} value={base._id}>
+              <option
+                key={base._id}
+                value={base._id}
+                className="bg-[#213321] text-green-300"
+              >
                 {base.name}
               </option>
             ))}
@@ -259,13 +257,19 @@ const Dashboard = () => {
 
         <select
           name="assetType"
-          className="border rounded-md p-2"
+          className="border border-green-700 rounded-md p-3 bg-[#213321] text-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition"
           value={filters.assetType}
           onChange={handleChange}
         >
-          <option value="">All Asset Types</option>
+          <option value="" className="bg-[#213321] text-green-300">
+            All Asset Types
+          </option>
           {assetTypes.map((type) => (
-            <option key={type._id} value={type._id}>
+            <option
+              key={type._id}
+              value={type._id}
+              className="bg-[#213321] text-green-300"
+            >
               {type.name}
             </option>
           ))}
@@ -274,24 +278,38 @@ const Dashboard = () => {
 
       {/* Metrics */}
       {loading ? (
-        <p>Loading...</p>
+        <p className="text-center text-green-400 text-xl font-semibold tracking-widest">
+          Loading...
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {stats.map((stat, idx) => (
             <div
               key={idx}
               onClick={() => onCardClick(stat.type)}
-              className="cursor-pointer"
+              className="cursor-pointer hover:shadow-lg hover:border-green-600 hover:ring-2 hover:ring-green-500 rounded-md transition-shadow transition-colors duration-300 bg-[#2a3a2a] border border-green-700 p-5 flex flex-col items-center justify-center"
+              title={`View details for ${stat.label}`}
             >
-              <Card
-                label={stat.label}
-                value={stat.value}
-                highlight={stat.highlight}
-              />
+              <p
+                className={`text-lg font-semibold uppercase tracking-wide ${
+                  stat.highlight ? "text-green-400" : "text-green-300"
+                }`}
+              >
+                {stat.label}
+              </p>
+              <p
+                className={`text-3xl font-extrabold mt-3 ${
+                  stat.highlight ? "text-green-500" : "text-green-300"
+                }`}
+              >
+                {stat.value}
+              </p>
             </div>
           ))}
         </div>
       )}
+
+      {/* Popup */}
       {popupOpen && (
         <AssetTransactionsPopup
           startDate={filters.startDate}
