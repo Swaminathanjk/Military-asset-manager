@@ -9,4 +9,5 @@ router.post('/', controller.createAssignment);
 router.get('/', controller.getAllAssignments);
 router.get("/personnel/:serviceId", controller.getPersonnelAssignments);
 
+
 module.exports = router;

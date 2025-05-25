@@ -127,6 +127,7 @@ const Assignments = () => {
       setLoading(true);
       try {
         let url = "/assignments";
+
         if (user.role === "personnel") {
           url = `/assignments/personnel/${user.serviceId}`;
         } else if (
@@ -158,12 +159,8 @@ const Assignments = () => {
           );
           setFilteredAssignments(filtered);
         } else if (user.role === "personnel") {
-          const filtered = allAssignments.filter(
-            (a) =>
-              a.assignedTo === user.serviceId ||
-              a.assignedTo?.serviceId === user.serviceId
-          );
-          setFilteredAssignments(filtered);
+          // No need to filter again, already filtered at the API level
+          setFilteredAssignments(allAssignments);
         } else {
           setFilteredAssignments(allAssignments);
         }

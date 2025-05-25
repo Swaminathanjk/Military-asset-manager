@@ -176,6 +176,7 @@ exports.getPersonnelAssignments = async (req, res) => {
       .populate("assetType", "name")
       .populate("base", "name")
       .populate("assignedBy", "name serviceId")
+      .populate("assignedTo", "name serviceId") // ✅ ADD THIS LINE
       .sort({ createdAt: -1 });
 
     res.json({ data: assignments });

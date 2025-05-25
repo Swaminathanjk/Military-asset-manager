@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:5000/api",
+  baseURL: "http://localhost:5000/api",
 });
 
 // Add token from localStorage (or your preferred storage)
@@ -16,3 +16,4 @@ api.interceptors.request.use((config) => {
 export default api;
 
 
+//import.meta.env.VITE_BACKEND_URL || 
