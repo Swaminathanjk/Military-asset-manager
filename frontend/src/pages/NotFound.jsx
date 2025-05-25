@@ -2,14 +2,18 @@ import { Link } from "react-router-dom";
 
 const NotFound = () => {
   return (
-    <div className="flex flex-col items-center justify-center h-screen text-center p-6">
-      <h1 className="text-6xl font-bold mb-4">404</h1>
-      <p className="text-xl mb-6">Oops! Page not found.</p>
+    <div className="flex flex-col items-center justify-center h-screen bg-[#1f2d1f] p-6 font-[Rajdhani] text-white">
+      <h1 className="text-9xl font-extrabold mb-6 tracking-widest border-b border-green-600 pb-4 w-fit">
+        404
+      </h1>
+      <p className="text-2xl mb-8 uppercase font-semibold tracking-wider">
+        Mission Failed: Page Not Found
+      </p>
       <Link
         to="/dashboard"
-        className="text-blue-600 hover:underline font-semibold"
+        className="bg-green-700 hover:bg-green-800 transition-colors px-6 py-3 rounded-md uppercase font-bold tracking-wide shadow-lg"
       >
-        Go back to Dashboard
+        Return to Command Center
       </Link>
     </div>
   );

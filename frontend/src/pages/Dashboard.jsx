@@ -287,7 +287,7 @@ const Dashboard = () => {
             <div
               key={idx}
               onClick={() => onCardClick(stat.type)}
-              className="cursor-pointer hover:shadow-lg hover:border-green-600 hover:ring-2 hover:ring-green-500 rounded-md transition-shadow transition-colors duration-300 bg-[#2a3a2a] border border-green-700 p-5 flex flex-col items-center justify-center"
+              className="cursor-pointer hover:shadow-lg hover:border-green-600 hover:ring-2 hover:ring-green-500 rounded-md transition-shadow  duration-300 bg-[#2a3a2a] border border-green-700 p-5 flex flex-col items-center justify-center"
               title={`View details for ${stat.label}`}
             >
               <p

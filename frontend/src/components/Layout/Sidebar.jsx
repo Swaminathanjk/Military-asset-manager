@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../../context/authContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Sidebar = ({ isOpen }) => {
@@ -31,7 +31,7 @@ const Sidebar = ({ isOpen }) => {
     >
       <div>
         <h2 className="mt-6 mb-8 text-3xl font-extrabold tracking-widest text-center uppercase text-[#ffe8d6] drop-shadow-lg">
-          Asset Manager
+          Military Asset Manager
         </h2>
         <nav className="space-y-3 px-4">
           {links.map(({ to, label }) => (

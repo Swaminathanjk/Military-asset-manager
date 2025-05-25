@@ -6,20 +6,18 @@ import { toast } from "react-toastify";
 
 const Assignments = () => {
   const { user } = useAuth();
+
+  // Define CommanderCard outside or inside Assignments, but pass proper props
   const CommanderCard = ({ user, baseName }) => {
     if (!user || user.role !== "base commander") return null;
 
     return (
-      <div className="mb-6 bg-green-50 border-green-400 border p-4 rounded shadow">
-        <h3 className="text-xl font-semibold mb-2 text-green-700">
-          Base Commander Details
-        </h3>
+      <div className="mb-6 bg-green-50 border-green-400 border p-4 rounded shadow text-green-700">
+        <h3 className="text-xl font-semibold mb-2">Base Commander Details</h3>
         <p>
           <strong>Name:</strong> {user.name || "N/A"}
         </p>
-        <p>
-          <strong>Email:</strong> {user.email || "N/A"}
-        </p>
+
         <p>
           <strong>Service ID:</strong> {user.serviceId || "N/A"}
         </p>
@@ -277,22 +275,27 @@ const Assignments = () => {
     bases.find((b) => normalizeId(b._id) === normalizeId(formData.base))?.name;
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">Assignments</h2>
+    <div className="min-h-screen bg-[#1f2d1f] px-4 py-8 font-[Rajdhani] text-white max-w-5xl mx-auto">
+      <h2 className="text-3xl font-extrabold mb-6 tracking-widest uppercase border-b border-green-500 pb-2">
+        Assignments
+      </h2>
 
       {canAssign && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 max-w-md space-y-4 border p-4 rounded shadow"
+          className="mb-8 bg-[#2e3d2e] border border-green-700 rounded-xl p-6 shadow-lg max-w-md"
         >
-          <div>
-            <label className="block font-semibold mb-1">Base</label>
+          <div className="mb-4">
+            <CommanderCard user={user} baseName={user.baseId?.name} />
+            <label className="block mb-1 font-bold uppercase text-green-400 tracking-wide">
+              Base
+            </label>
             {user.role === "admin" ? (
               <select
                 name="base"
                 value={formData.base}
                 onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full bg-[#1b2a1b] border border-green-700 rounded-md px-3 py-2 text-white placeholder-green-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                 required
               >
                 <option value="">Select base</option>
@@ -307,19 +310,20 @@ const Assignments = () => {
                 type="text"
                 value={baseName || "Unknown"}
                 readOnly
-                className="w-full border px-3 py-2 rounded bg-gray-200 cursor-not-allowed"
+                className="w-full bg-[#1b2a1b] border border-green-700 rounded-md px-3 py-2 text-green-300 cursor-not-allowed"
               />
             )}
           </div>
-          <div>
-            <label className="block font-semibold mb-1">
+
+          <div className="mb-4">
+            <label className="block mb-1 font-bold uppercase text-green-400 tracking-wide">
               Personnel Service ID
             </label>
             <select
               name="assignedTo"
               value={formData.assignedTo}
               onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
+              className="w-full bg-[#1b2a1b] border border-green-700 rounded-md px-3 py-2 text-white placeholder-green-400 focus:outline-none focus:ring-2 focus:ring-green-500"
               required
             >
               <option value="">Select personnel</option>
@@ -331,13 +335,15 @@ const Assignments = () => {
             </select>
           </div>
 
-          <div>
-            <label className="block font-semibold mb-1">Equipment Type</label>
+          <div className="mb-4">
+            <label className="block mb-1 font-bold uppercase text-green-400 tracking-wide">
+              Equipment Type
+            </label>
             <select
               name="assetType"
               value={formData.assetType}
               onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
+              className="w-full bg-[#1b2a1b] border border-green-700 rounded-md px-3 py-2 text-white placeholder-green-400 focus:outline-none focus:ring-2 focus:ring-green-500"
               required
               disabled={!formData.base || assetTypes.length === 0}
             >
@@ -356,15 +362,17 @@ const Assignments = () => {
             </select>
           </div>
 
-          <div>
-            <label className="block font-semibold mb-1">Quantity</label>
+          <div className="mb-6">
+            <label className="block mb-1 font-bold uppercase text-green-400 tracking-wide">
+              Quantity
+            </label>
             <input
               type="number"
               name="quantity"
               min="1"
               value={formData.quantity}
               onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
+              className="w-full bg-[#1b2a1b] border border-green-700 rounded-md px-3 py-2 text-white placeholder-green-400 focus:outline-none focus:ring-2 focus:ring-green-500"
               required
             />
           </div>
@@ -372,89 +380,115 @@ const Assignments = () => {
           <button
             type="submit"
             disabled={assigning}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-300"
+            className="w-full bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-bold uppercase py-2 rounded tracking-wider transition-colors"
           >
             {assigning ? "Assigning..." : "Assign"}
           </button>
         </form>
       )}
-      <h3 className="text-xl font-semibold mb-2">Current Assignments</h3>
+
+      <h3 className="text-2xl font-bold mb-4 tracking-wide uppercase border-b border-green-600 pb-1">
+        Current Assignments
+      </h3>
 
       {loading ? (
-        <p>Loading assignments...</p>
+        <p className="text-green-300 italic">Loading assignments...</p>
       ) : filteredAssignments.length === 0 ? (
-        <p>No assignments found.</p>
+        <p className="text-green-300 italic">No assignments found.</p>
       ) : (
-        <table className="w-full border-collapse border border-gray-300 rounded shadow">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border border-gray-300 p-2">Personnel</th>
-              <th className="border border-gray-300 p-2">Base</th>
-              <th className="border border-gray-300 p-2">Asset Type</th>
-              <th className="border border-gray-300 p-2">Quantity</th>
-              <th className="border border-gray-300 p-2">Date</th>
-              <th className="border border-gray-300 p-2">Assigned By</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAssignments.map((a) => {
-              const resolveUser = (ref) => {
-                if (typeof ref === "object") return ref;
-                return users.find((u) => u._id === ref || u.serviceId === ref);
-              };
+        <div className="overflow-x-auto rounded-lg shadow-lg border border-green-700">
+          <table className="min-w-full border-collapse text-white">
+            <thead className="bg-green-800 uppercase text-green-200 tracking-wide">
+              <tr>
+                <th className="border border-green-600 px-3 py-2 text-left">
+                  Personnel
+                </th>
+                <th className="border border-green-600 px-3 py-2 text-left">
+                  Base
+                </th>
+                <th className="border border-green-600 px-3 py-2 text-left">
+                  Asset Type
+                </th>
+                <th className="border border-green-600 px-3 py-2 text-center">
+                  Quantity
+                </th>
+                <th className="border border-green-600 px-3 py-2 text-left">
+                  Date
+                </th>
+                <th className="border border-green-600 px-3 py-2 text-left">
+                  Assigned By
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAssignments.map((a) => {
+                const resolveUser = (ref) => {
+                  if (typeof ref === "object") return ref;
+                  return users.find(
+                    (u) => u._id === ref || u.serviceId === ref
+                  );
+                };
 
-              const assignedToObj = resolveUser(a.assignedTo);
-              const assignedByObj = resolveUser(a.assignedBy);
+                const assignedToObj = resolveUser(a.assignedTo);
+                const assignedByObj = resolveUser(a.assignedBy);
 
-              const assignedToId =
-                assignedToObj?.serviceId || assignedToObj?._id || a.assignedTo;
-              const assignedToName =
-                assignedToObj?.name || assignedToId || "Unknown";
+                const assignedToId =
+                  assignedToObj?.serviceId ||
+                  assignedToObj?._id ||
+                  a.assignedTo;
+                const assignedToName =
+                  assignedToObj?.name || assignedToId || "Unknown";
 
-              const assignedById = assignedByObj?.serviceId
-                ? typeof assignedByObj.serviceId === "object"
-                  ? assignedByObj.serviceId.id ||
-                    JSON.stringify(assignedByObj.serviceId)
-                  : String(assignedByObj.serviceId)
-                : typeof a.assignedBy === "string"
-                ? a.assignedBy
-                : ""; // ignore a.assignedBy if it's object or missing
+                const assignedById = assignedByObj?.serviceId
+                  ? typeof assignedByObj.serviceId === "object"
+                    ? assignedByObj.serviceId.id ||
+                      JSON.stringify(assignedByObj.serviceId)
+                    : String(assignedByObj.serviceId)
+                  : typeof a.assignedBy === "string"
+                  ? a.assignedBy
+                  : "";
 
-              const assignedByName = assignedByObj?.name || "Unknown";
+                const assignedByName = assignedByObj?.name || "Unknown";
 
-              return (
-                <tr key={a._id} className="hover:bg-green-50">
-                  <td className="border border-gray-300 p-2">
-                    {assignedToId} - {assignedToName}
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    {a.base?.name || a.base}
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    {a.assetType?.name || a.assetType}
-                  </td>
-                  <td className="border border-gray-300 p-2">{a.quantity}</td>
-                  <td className="border border-gray-300 p-2">
-                    {a.date
-                      ? new Date(a.date).toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "-"}
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    {assignedById
-                      ? `${assignedById} - ${assignedByName}`
-                      : assignedByName}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr
+                    key={a._id}
+                    className="hover:bg-green-900 transition-colors duration-150"
+                  >
+                    <td className="border border-green-700 px-3 py-2">
+                      {assignedToId} - {assignedToName}
+                    </td>
+                    <td className="border border-green-700 px-3 py-2">
+                      {a.base?.name || a.base}
+                    </td>
+                    <td className="border border-green-700 px-3 py-2">
+                      {a.assetType?.name || a.assetType}
+                    </td>
+                    <td className="border border-green-700 px-3 py-2 text-center">
+                      {a.quantity}
+                    </td>
+                    <td className="border border-green-700 px-3 py-2">
+                      {a.date
+                        ? new Date(a.date).toLocaleString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-"}
+                    </td>
+                    <td className="border border-green-700 px-3 py-2">
+                      {assignedById
+                        ? `${assignedById} - ${assignedByName}`
+                        : assignedByName}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
