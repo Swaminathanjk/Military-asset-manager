@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  // console.log("Dashboard component rendered, user:", user);
 
   const [filters, setFilters] = useState({
     startDate: "",
@@ -31,7 +30,6 @@ const Dashboard = () => {
         const assetTypesResponse = await api.get("/asset-types");
         setAssetTypes(assetTypesResponse.data || []);
 
-        // If user is commander or logistics officer, set base to their assigned base
         if (
           (user?.role === "base commander" ||
             user?.role === "logistics officer") &&
@@ -50,25 +48,53 @@ const Dashboard = () => {
     fetchFiltersData();
   }, [user]);
 
-  // Handle filter changes (prevent base change for commander/logistics)
+  // Fetch asset types when base changes
+  useEffect(() => {
+    const fetchAssetTypes = async () => {
+      try {
+        if (!filters.base) {
+          // If "All Bases" selected
+          const res = await api.get("/asset-types");
+          setAssetTypes(res.data || []);
+        } else {
+          // If specific base is selected
+          const res = await api.get(`/asset-types/base/${filters.base}`);
+          setAssetTypes(Array.isArray(res.data) ? res.data : []);
+        }
+
+        // Reset asset type on base change
+        setFilters((prev) => ({ ...prev, assetType: "" }));
+      } catch (error) {
+        console.error("Failed to fetch asset types", error);
+        toast.error("Failed to load asset types");
+        setAssetTypes([]);
+      }
+    };
+
+    fetchAssetTypes();
+  }, [filters.base]);
+
+  // Handle filter changes
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (
       name === "base" &&
       (user?.role === "base commander" || user?.role === "logistics officer")
     )
-      return; // base fixed for these roles
+      return;
+
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Fetch dashboard data when filters or user changes
+  // Fetch dashboard data
   useEffect(() => {
     if (!user) return;
-
     fetchDashboardData();
   }, [filters, user]);
 
   const fetchDashboardData = async () => {
+    if (!user || !filters.startDate || !filters.endDate) return;
     setLoading(true);
     try {
       const params = {};
@@ -77,7 +103,6 @@ const Dashboard = () => {
       if (filters.endDate) params.endDate = filters.endDate;
 
       if (user.role === "base commander" || user.role === "logistics officer") {
-        // Force user's base for commanders/logistics
         params.base = user.baseId._id || user.baseId;
       } else if (filters.base) {
         params.base = filters.base;
@@ -85,10 +110,7 @@ const Dashboard = () => {
 
       if (filters.assetType) params.assetType = filters.assetType;
 
-      console.log("Fetching dashboard with params:", params);
-
       const res = await api.get("/dashboard", { params });
-      console.log("Dashboard API response:", res.data);
       setDashboardData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -97,18 +119,6 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-
-  // Debug logs
-  // console.log("User base:", user?.base);
-  // console.log("Filters base:", filters.base);
-  // console.log("Bases:", bases);
-
-  // Safe base id retrieval
-  const baseId = typeof user.base === "string" ? user.base : user.base?._id;
-
-  const baseName =
-    bases.find((b) => b._id === filters.base)?.name ||
-    (typeof user.base === "object" ? user.base.name : "Your Base");
 
   const stats = [
     { label: "Opening Balance", value: 0 },
@@ -161,7 +171,6 @@ const Dashboard = () => {
           onChange={handleChange}
         />
 
-        {/* Base dropdown or fixed base */}
         {user?.role === "base commander" ||
         user?.role === "logistics officer" ? (
           <input
@@ -169,7 +178,6 @@ const Dashboard = () => {
             name="base"
             className="border rounded-md p-2 bg-gray-100 cursor-not-allowed"
             value={
-              // Find base name for display
               bases.find((b) => b._id === filters.base)?.name ||
               user.baseId?.name ||
               "Your Base"
@@ -184,7 +192,7 @@ const Dashboard = () => {
             value={filters.base}
             onChange={handleChange}
           >
-            <option value="">Select Base</option>
+            {user?.role === "admin" && <option value="">All Bases</option>}
             {bases.map((base) => (
               <option key={base._id} value={base._id}>
                 {base.name}
@@ -199,7 +207,7 @@ const Dashboard = () => {
           value={filters.assetType}
           onChange={handleChange}
         >
-          <option value="">Select Asset Type</option>
+          <option value="">All Asset Types</option>
           {assetTypes.map((type) => (
             <option key={type._id} value={type._id}>
               {type.name}

@@ -37,6 +37,7 @@ app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/auth", require("./routes/authRoutes")); // Auth routes to handle JWT-based register/login
 app.use("/api/purchases", require("./routes/purchaseRoutes"));
 app.use("/api/asset-types", require("./routes/assetTypeRoutes"));
+app.use("/api/asset-transactions", require("./routes/assetTransactionsRoutes"));
 
 // Connect DB and start server
 connectDB().then(() => {
