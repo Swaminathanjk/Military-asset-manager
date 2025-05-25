@@ -157,7 +157,8 @@ const Dashboard = () => {
     },
     {
       label: "Assigned",
-      value: dashboardData?.assigned?.length ?? 0,
+      value:
+        dashboardData?.assigned?.reduce((a, b) => a + (b.total ?? 0), 0) ?? 0,
       type: "assignment",
     },
 
