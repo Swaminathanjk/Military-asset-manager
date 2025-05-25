@@ -115,9 +115,7 @@ exports.login = async (req, res) => {
       },
     });
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Signing with JWT_SECRET:", process.env.JWT_SECRET);
-    }
+    
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

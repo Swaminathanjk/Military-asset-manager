@@ -44,7 +44,6 @@ const Assignments = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
-  // console.log(filteredAssignments);
 
   const canAssign = user?.role === "admin" || user?.role === "base commander";
 

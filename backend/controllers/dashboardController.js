@@ -6,8 +6,7 @@ const mongoose = require("mongoose");
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 exports.getDashboardData = async (req, res) => {
-  console.log("Inside getDashboardData");
-  console.log("User from token:", req.user);
+  
 
   try {
     const { base, assetType, startDate, endDate } = req.query;
@@ -114,10 +113,7 @@ exports.getDashboardData = async (req, res) => {
         sumTotals(assigned),
     };
 
-    console.log("purchaseFilter:", purchaseFilter);
-    console.log("transfersInFilter:", transfersInFilter);
-    console.log("transfersOutFilter:", transfersOutFilter);
-    console.log("assignedFilter:", assignedFilter);
+ 
 
     res.json({ data });
   } catch (err) {

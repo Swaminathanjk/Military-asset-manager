@@ -18,7 +18,6 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Military Asset Management API running");
 });
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 // Protected route example
 app.get("/api/protected", verifyToken, (req, res) => {
