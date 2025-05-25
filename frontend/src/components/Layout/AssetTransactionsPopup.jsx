@@ -89,7 +89,8 @@ const AssetTransactionsPopup = ({
                     {/* Reference details vary by type */}
                     {type === "assignment" && tx.reference ? (
                       <>
-                        Assigned To: {tx.reference.assignedTo?.name || "-"} <br />
+                        Assigned To: {tx.reference.assignedTo?.name || "-"}{" "}
+                        <br />
                         Assigned By: {tx.reference.assignedBy?.name || "-"}
                       </>
                     ) : type === "purchase" && tx.purchasedBy ? (
@@ -106,7 +107,13 @@ const AssetTransactionsPopup = ({
                     )}
                   </td>
                   <td className="border-b px-4 py-2">
-                    {tx.purchasedBy?.name || tx.reference?.initiatedBy?.name || "-"}
+                    {type === "assignment"
+                      ? tx.reference?.assignedBy?.name || "-"
+                      : type === "purchase"
+                      ? tx.purchasedBy?.name || "-"
+                      : type === "transfer-in" || type === "transfer-out"
+                      ? tx.reference?.initiatedBy?.name || "-"
+                      : "-"}
                   </td>
                 </tr>
               ))}
