@@ -4,6 +4,8 @@ import Card from "../UI/Card";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
+import AssetTransactionsPopup from "../components/Layout/AssetTransactionsPopup"; // import popup component
+
 const Dashboard = () => {
   const { user } = useAuth();
 
@@ -19,6 +21,12 @@ const Dashboard = () => {
 
   const [bases, setBases] = useState([]);
   const [assetTypes, setAssetTypes] = useState([]);
+
+  const [Transactions, setTransactions] = useState([]);
+
+  // New states for popup
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupType, setPopupType] = useState(""); // e.g. "purchase", "assignment", etc.
 
   // Fetch bases and asset types on mount
   useEffect(() => {
@@ -53,16 +61,12 @@ const Dashboard = () => {
     const fetchAssetTypes = async () => {
       try {
         if (!filters.base) {
-          // If "All Bases" selected
           const res = await api.get("/asset-types");
           setAssetTypes(res.data || []);
         } else {
-          // If specific base is selected
           const res = await api.get(`/asset-types/base/${filters.base}`);
           setAssetTypes(Array.isArray(res.data) ? res.data : []);
         }
-
-        // Reset asset type on base change
         setFilters((prev) => ({ ...prev, assetType: "" }));
       } catch (error) {
         console.error("Failed to fetch asset types", error);
@@ -70,7 +74,6 @@ const Dashboard = () => {
         setAssetTypes([]);
       }
     };
-
     fetchAssetTypes();
   }, [filters.base]);
 
@@ -86,6 +89,31 @@ const Dashboard = () => {
 
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
+
+  //POPUP effect
+  useEffect(() => {
+    if (!popupOpen) return;
+
+    const fetchTransactions = async () => {
+      try {
+        const params = new URLSearchParams({
+          type: popupType,
+          base: filters.base,
+          assetType: filters.assetType,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+        });
+
+        const res = await api.get(`/asset-transactions?${params.toString()}`);
+        setTransactions(res.data.data || []);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        setError("Network error");
+      }
+    };
+
+    fetchTransactions();
+  }, [popupOpen, popupType, filters]);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -121,33 +149,61 @@ const Dashboard = () => {
   };
 
   const stats = [
-    { label: "Opening Balance", value: 0 },
-    { label: "Closing Balance", value: dashboardData?.closingBalance ?? 0 },
+    { label: "Opening Balance", value: 0, type: "opening-balance" },
+    {
+      label: "Closing Balance",
+      value: dashboardData?.closingBalance ?? 0,
+      type: "closing-balance",
+    },
     {
       label: "Net Movement",
       value: dashboardData?.netMovement ?? 0,
       highlight: true,
+      type: "net-movement",
     },
-    { label: "Assigned", value: dashboardData?.assigned?.length ?? 0 },
-    { label: "Expended", value: dashboardData?.expended?.length ?? 0 },
+    {
+      label: "Assigned",
+      value: dashboardData?.assigned?.length ?? 0,
+      type: "assignment",
+    },
+
     {
       label: "Purchased",
       value:
         dashboardData?.purchases?.reduce((a, b) => a + (b.total ?? 0), 0) ?? 0,
+      type: "purchase",
     },
     {
       label: "Transferred Out",
       value:
         dashboardData?.transfersOut?.reduce((a, b) => a + (b.total ?? 0), 0) ??
         0,
+      type: "transfer-out",
     },
     {
       label: "Transferred In",
       value:
         dashboardData?.transfersIn?.reduce((a, b) => a + (b.total ?? 0), 0) ??
         0,
+      type: "transfer-in",
     },
   ];
+
+  // Handler to open popup on card click
+  const onCardClick = (type) => {
+    // Only open popup for relevant types where transaction data exists
+    const allowedTypes = [
+      "assignment",
+
+      "purchase",
+      "transfer-out",
+      "transfer-in",
+    ];
+    if (allowedTypes.includes(type)) {
+      setPopupType(type);
+      setPopupOpen(true);
+    }
+  };
 
   return (
     <div>
@@ -222,14 +278,29 @@ const Dashboard = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {stats.map((stat, idx) => (
-            <Card
+            <div
               key={idx}
-              label={stat.label}
-              value={stat.value}
-              highlight={stat.highlight}
-            />
+              onClick={() => onCardClick(stat.type)}
+              className="cursor-pointer"
+            >
+              <Card
+                label={stat.label}
+                value={stat.value}
+                highlight={stat.highlight}
+              />
+            </div>
           ))}
         </div>
+      )}
+      {popupOpen && (
+        <AssetTransactionsPopup
+          startDate={filters.startDate}
+          endDate={filters.endDate}
+          type={popupType}
+          assetType={filters.assetType}
+          base={filters.base}
+          onClose={() => setPopupOpen(false)}
+        />
       )}
     </div>
   );

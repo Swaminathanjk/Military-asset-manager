@@ -34,7 +34,7 @@ exports.getDashboardData = async (req, res) => {
       dateFilter.$lte = end;
     }
 
-    const addDateFilter = (filter, field = "timestamp") => {
+    const addDateFilter = (filter, field = "date") => {
       if (startDate || endDate) {
         filter[field] = dateFilter;
       }
@@ -73,7 +73,7 @@ exports.getDashboardData = async (req, res) => {
       assignedFilter.assetType = assetTypeId;
     }
 
-    addDateFilter(purchaseFilter, "timestamp");
+    addDateFilter(purchaseFilter, "date");
     addDateFilter(transfersInFilter, "date");
     addDateFilter(transfersOutFilter, "date");
     addDateFilter(assignedFilter, "date");

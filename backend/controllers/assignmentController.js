@@ -6,6 +6,7 @@ const AssetTransaction = require("../models/AssetTransaction");
 exports.createAssignment = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+
   try {
     const { assetType, base, quantity, assignedTo, assignedBy } = req.body;
 
@@ -16,15 +17,35 @@ exports.createAssignment = async (req, res) => {
 
     const baseId = new mongoose.Types.ObjectId(base);
 
-    // Validate commander
-    const commander = await User.findOne({ serviceId: assignedBy }).session(
-      session
-    );
-    if (!commander) {
-      await session.abortTransaction();
-      return res.status(404).json({ message: "Commander not found" });
+    // Helper function to resolve assignedBy to user _id
+    async function resolveUserId(idOrServiceId) {
+      if (mongoose.Types.ObjectId.isValid(idOrServiceId)) {
+        // Looks like an ObjectId, verify user exists with that _id
+        const user = await User.findById(idOrServiceId).session(session);
+        if (!user) throw new Error("AssignedBy user not found by _id");
+        return user._id;
+      } else {
+        // Assume it's a serviceId string
+        const user = await User.findOne({ serviceId: idOrServiceId }).session(
+          session
+        );
+        if (!user) throw new Error("AssignedBy user not found by serviceId");
+        return user._id;
+      }
     }
 
+    // Resolve assignedBy to user _id
+    let assignedById;
+    try {
+      assignedById = await resolveUserId(assignedBy);
+    } catch (err) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: err.message });
+    }
+
+    const commander = await User.findById(assignedById).session(session);
+
+    // Restrict logistics officers
     if (commander.role === "logistics officer") {
       await session.abortTransaction();
       return res
@@ -32,14 +53,17 @@ exports.createAssignment = async (req, res) => {
         .json({ message: "Logistics officers cannot assign assets" });
     }
 
-    if (!commander.baseId || !commander.baseId.equals(baseId)) {
-      await session.abortTransaction();
-      return res
-        .status(403)
-        .json({ message: "Provided base does not match commander's base" });
+    // Skip base matching check if user is admin
+    if (commander.role !== "admin") {
+      if (!commander.baseId || !commander.baseId.equals(baseId)) {
+        await session.abortTransaction();
+        return res
+          .status(403)
+          .json({ message: "Provided base does not match commander's base" });
+      }
     }
 
-    // Validate personnel
+    // Find and validate assigned personnel by serviceId
     const personnel = await User.findOne({ serviceId: assignedTo }).session(
       session
     );
@@ -55,7 +79,7 @@ exports.createAssignment = async (req, res) => {
         .json({ message: "Assigned personnel is not part of this base" });
     }
 
-    // Check asset availability
+    // Check asset availability (same as your original logic)
     const transactions = await AssetTransaction.find({
       assetType,
       base: baseId,
@@ -80,13 +104,13 @@ exports.createAssignment = async (req, res) => {
       });
     }
 
-    // Create assignment
+    // Create the assignment with ObjectId references
     const assignment = new Assignment({
       assetType,
       base: baseId,
       quantity,
-      assignedTo,
-      assignedBy,
+      assignedTo: personnel._id,
+      assignedBy: assignedById,
     });
 
     await assignment.save({ session });
@@ -104,9 +128,10 @@ exports.createAssignment = async (req, res) => {
     await assetTx.save({ session });
 
     await session.commitTransaction();
-    res
-      .status(201)
-      .json({ message: "Asset assigned successfully", data: assignment });
+    res.status(201).json({
+      message: "Asset assigned successfully",
+      data: assignment,
+    });
   } catch (err) {
     await session.abortTransaction();
     console.error("Assignment error:", err);
@@ -127,7 +152,6 @@ exports.getAllAssignments = async (req, res) => {
       .populate("assignedBy", "name serviceId")
       .sort({ createdAt: -1 });
 
-    // Send the array directly without wrapping in an object
     res.json(assignments);
   } catch (err) {
     console.error("Error fetching assignments:", err);

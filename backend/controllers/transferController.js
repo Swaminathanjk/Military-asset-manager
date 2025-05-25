@@ -88,7 +88,7 @@ exports.createTransfer = async (req, res) => {
         type: "transfer-out",
         reference: transfer._id,
         referenceModel: "Transfer",
-        timestamp: new Date(),
+        date: new Date(),
       },
       {
         assetType,
@@ -97,7 +97,7 @@ exports.createTransfer = async (req, res) => {
         type: "transfer-in",
         reference: transfer._id,
         referenceModel: "Transfer",
-        timestamp: new Date(),
+        date: new Date(),
       },
     ]);
 

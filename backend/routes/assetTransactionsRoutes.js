@@ -1,7 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const assetTransactionController = require('../controllers/assetTransactionController');
+const {
+  getDetailedTransactions,
+} = require("../controllers/assetTransactionController");
 
-router.get('/', assetTransactionController.getFilteredTransactions);
+router.get("/", getDetailedTransactions);
 
 module.exports = router;

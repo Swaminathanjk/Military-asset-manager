@@ -85,7 +85,7 @@ exports.getPurchasesByBase = async (req, res) => {
       .populate("assetType")
       .populate("base")
       .populate("purchasedBy", "name role")
-      .sort({ timestamp: -1 });
+      .sort({ date: -1 });
 
     res.json({ data: purchases });
   } catch (err) {
@@ -105,16 +105,16 @@ exports.getPurchases = async (req, res) => {
       filter.assetType = assetType;
 
     if (startDate || endDate) {
-      filter.timestamp = {};
-      if (startDate) filter.timestamp.$gte = new Date(startDate);
-      if (endDate) filter.timestamp.$lte = new Date(endDate);
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate);
+      if (endDate) filter.date.$lte = new Date(endDate);
     }
 
     const purchases = await AssetTransaction.find(filter)
       .populate("assetType")
       .populate("base")
       .populate("purchasedBy", "name role")
-      .sort({ timestamp: -1 });
+      .sort({ date: -1 });
 
     res.json({ data: purchases });
   } catch (err) {

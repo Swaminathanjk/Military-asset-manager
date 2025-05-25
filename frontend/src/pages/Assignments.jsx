@@ -46,6 +46,7 @@ const Assignments = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  // console.log(filteredAssignments);
 
   const canAssign = user?.role === "admin" || user?.role === "base commander";
 
@@ -207,11 +208,11 @@ const Assignments = () => {
     setAssigning(true);
     try {
       await api.post("/assignments", {
-        assignedTo: formData.assignedTo,
+        assignedTo: formData.assignedTo, // personnel serviceId (from select)
         base: normalizeId(formData.base),
         assetType: formData.assetType,
         quantity: Number(formData.quantity),
-        assignedBy: user.serviceId,
+        assignedBy: user.serviceId || user._id, // fallback to _id if serviceId missing
       });
 
       toast.success("Assignment created");
@@ -393,26 +394,39 @@ const Assignments = () => {
               <th className="border border-gray-300 p-2">Asset Type</th>
               <th className="border border-gray-300 p-2">Quantity</th>
               <th className="border border-gray-300 p-2">Date</th>
+              <th className="border border-gray-300 p-2">Assigned By</th>
             </tr>
           </thead>
           <tbody>
             {filteredAssignments.map((a) => {
-              const personnelObj =
-                typeof a.assignedTo === "object"
-                  ? a.assignedTo
-                  : users.find(
-                      (u) =>
-                        u.serviceId === a.assignedTo || u._id === a.assignedTo
-                    );
+              const resolveUser = (ref) => {
+                if (typeof ref === "object") return ref;
+                return users.find((u) => u._id === ref || u.serviceId === ref);
+              };
 
-              const personnelId =
-                personnelObj?.serviceId || personnelObj?._id || a.assignedTo;
-              const personnelName = personnelObj?.name || a.assignedTo;
+              const assignedToObj = resolveUser(a.assignedTo);
+              const assignedByObj = resolveUser(a.assignedBy);
+
+              const assignedToId =
+                assignedToObj?.serviceId || assignedToObj?._id || a.assignedTo;
+              const assignedToName =
+                assignedToObj?.name || assignedToId || "Unknown";
+
+              const assignedById = assignedByObj?.serviceId
+                ? typeof assignedByObj.serviceId === "object"
+                  ? assignedByObj.serviceId.id ||
+                    JSON.stringify(assignedByObj.serviceId)
+                  : String(assignedByObj.serviceId)
+                : typeof a.assignedBy === "string"
+                ? a.assignedBy
+                : ""; // ignore a.assignedBy if it's object or missing
+
+              const assignedByName = assignedByObj?.name || "Unknown";
 
               return (
                 <tr key={a._id} className="hover:bg-green-50">
                   <td className="border border-gray-300 p-2">
-                    {personnelId} - {personnelName}
+                    {assignedToId} - {assignedToName}
                   </td>
                   <td className="border border-gray-300 p-2">
                     {a.base?.name || a.base}
@@ -431,6 +445,11 @@ const Assignments = () => {
                           minute: "2-digit",
                         })
                       : "-"}
+                  </td>
+                  <td className="border border-gray-300 p-2">
+                    {assignedById
+                      ? `${assignedById} - ${assignedByName}`
+                      : assignedByName}
                   </td>
                 </tr>
               );

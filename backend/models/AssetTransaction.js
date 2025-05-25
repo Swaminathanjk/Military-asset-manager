@@ -7,13 +7,13 @@ const assetTransactionSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   type: {
     type: String,
-    enum: ['purchase', 'transfer-in', 'transfer-out', 'assignment', 'expenditure'], 
+    enum: ['purchase', 'transfer-in', 'transfer-out', 'assignment'], 
     required: true
   },
   reference: { type: mongoose.Schema.Types.ObjectId, refPath: 'referenceModel' },
   referenceModel: { type: String }, // e.g., 'Transfer', 'Assignment'
   purchasedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // ✅ NEW
-  timestamp: { type: Date, default: Date.now },
+  date: { type: Date, default: Date.now },
 }, { timestamps: true });
 
 
