@@ -18,6 +18,7 @@ const Signup = () => {
     baseId: "",
     serviceId: "",
   });
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -61,12 +62,11 @@ const Signup = () => {
         email: formData.email,
         password: formData.password,
         role: formData.role,
+        serviceId: formData.serviceId,
       };
 
       if (formData.role !== "admin") {
         payload.baseId = formData.baseId;
-        payload.serviceId =
-          getServicePrefix(formData.role) + formData.serviceId;
       }
 
       const response = await api.post("/auth/register", payload);
