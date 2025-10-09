@@ -18,14 +18,13 @@ A comprehensive web-based application for managing military assets, personnel, a
 - [Contributing](#contributing)
 - [License](#license)
 
-## ✨ Features
+##  Features
 
 -  **Secure Authentication** - JWT-based user authentication with bcrypt password hashing
 -  **Asset Management** - Track and manage military assets and equipment
 -  **User Management** - Role-based access control for different user types
 -  **Responsive Design** - Mobile-friendly interface built with React and Tailwind CSS
 -  **Real-time Updates** - Live data synchronization across the platform
--  **Firebase Integration** - Enhanced features with Firebase services
 -  **CRUD Operations** - Complete create, read, update, and delete functionality
 -  **Modern UI** - Clean and intuitive user interface with React Icons
 
