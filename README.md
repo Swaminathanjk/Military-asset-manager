@@ -97,7 +97,7 @@ Create a `.env` file in the `frontend` directory:
 VITE_BACKEND_URL=https://military-asset-manager.onrender.com/api
 ```
 
-## 🏃‍♂️ Running the Application
+##  Running the Application
 
 ### Development Mode
 
@@ -165,7 +165,7 @@ Military-asset-manager/
 └── README.md
 ```
 
-## 🔌 API Endpoints
+##  API Endpoints
 
 ### Authentication
 ```
