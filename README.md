@@ -16,7 +16,6 @@ A comprehensive web-based application for managing military assets, personnel, a
 - [Project Structure](#project-structure)
 - [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
-- [License](#license)
 
 ##  Features
 
